@@ -9,18 +9,19 @@
         name="month"
         class="month mr-1"
         v-model="currentMonth"
-        @change="$emit('month', String(currentMonth))"
+        @change="$emit('month', currentMonth)"
       >
-        <option v-for="(month, idx) in months" :key="month" :value="idx + 1">
+        <option v-for="(month, idx) in months" :key="month" :value="idx">
           {{ month[0].toUpperCase() + month.slice(1) }}
         </option>
       </select>
+
       <select
         v-if="years.length"
         name="year"
         class="year"
         v-model="currentYear"
-        @change="$emit('year', String(currentYear))"
+        @change="$emit('year', currentYear)"
       >
         <option v-for="year in years" :key="year" :value="year">
           {{ year }}
@@ -39,8 +40,9 @@ import moment from "moment";
 export default {
   name: "CalendarHeader",
   props: {
-    year: String,
-    month: String,
+    year: Number,
+    month: Number,
+    minYear: Number,
   },
   data() {
     return {
@@ -48,6 +50,7 @@ export default {
       months: [],
       currentYear: "",
       currentMonth: "",
+      maxYear: moment().year(),
     };
   },
   mounted() {
@@ -57,25 +60,41 @@ export default {
     this.currentMonth = this.month;
   },
   methods: {
-    generateYears(startYear = 2018) {
+    generateYears() {
       const years = [];
-      const range = moment().year() - startYear;
+      const range = this.maxYear - this.minYear;
       for (let i = 0; i <= range; i++) {
-        years.push(String(startYear + i));
+        years.push(this.minYear + i);
       }
 
       return years;
     },
     prevMonth() {
-      if (this.years.includes(this.currentYear)) {
-        this.$emit("year", String(this.currentYear));
-        this.$emit("month", String(this.currentMonth));
+      const sub = moment([this.currentYear, this.currentMonth, 1]).subtract(
+        1,
+        "months"
+      );
+
+      if (this.years.includes(sub.years())) {
+        this.$emit("navigate-date", "subtract");
+        this.currentMonth = sub.months();
+        this.currentYear = !this.years.includes(sub.years())
+          ? this.currentYear
+          : sub.years();
       }
     },
     nextMonth() {
-      if (this.years.includes(this.currentYear)) {
-        this.$emit("year", String(this.currentYear));
-        this.$emit("month", String(this.currentMonth));
+      const add = moment([this.currentYear, this.currentMonth, 1]).add(
+        1,
+        "months"
+      );
+
+      if (this.years.includes(add.years())) {
+        this.$emit("navigate-date", "add");
+        this.currentMonth = add.months();
+        this.currentYear = !this.years.includes(add.years())
+          ? this.currentYear
+          : add.years();
       }
     },
   },

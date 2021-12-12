@@ -6,6 +6,7 @@
       :id="week.weekNumber"
       :key="week.weekNumber"
       :style="{ gridTemplateRows: 'repeat(' + weeks.length + ', 1fr)' }"
+      :class="{ selected: selectedWeek === week.weekNumber }"
       @click="handleClick(week, $el)"
     >
       {{ week.weekNumber }}. tyden
@@ -20,8 +21,8 @@ export default {
   name: "CalendarWeeks",
   props: {
     show: Boolean,
-    year: String,
-    month: String,
+    year: Number,
+    month: Number,
   },
   data() {
     return {
@@ -42,43 +43,24 @@ export default {
   },
   methods: {
     handleClick(week) {
-      // element.childNodes.forEach(el => {
-      //   if(this.selectedWeek === Number(el.id)) {
-      //     el.classList.add('selected')
-      //   }
-      // });
-
+      this.selectedWeek = week.weekNumber;
       this.$emit("selectWeek", week);
     },
     calcWeeksList(year, month) {
       const weeks = [];
       let first, last;
+      const date = moment([year, month, 1]);
 
-      first = moment()
-        .month(month - 1)
-        .year(year)
-        .startOf("month")
-        .week();
-      last = moment()
-        .month(month - 1)
-        .year(year)
-        .endOf("month")
-        .week();
-      first = first <= 52 ? first : 0;
+      first = moment(date).startOf("month").startOf("week").weeks();
+      last = moment(date).endOf("month").endOf("week").weeks();
+      first = first <= moment(date).weeksInYear() ? first : 1;
+      last = last === 1 ? 53 : last;
 
       for (let i = first; i <= last; i++) {
         weeks.push({
           weekNumber: i,
-          from: moment()
-            .month(month - 1)
-            .year(year)
-            .week(i)
-            .startOf("week"),
-          to: moment()
-            .month(month - 1)
-            .year(year)
-            .week(i)
-            .endOf("week"),
+          from: moment(date).weeks(i).day(1),
+          to: moment(date).weeks(i).day(7),
         });
       }
 
@@ -91,15 +73,18 @@ export default {
 <style>
 .calendar-weeks {
   display: grid;
-  grid-gap: 1.9rem;
+  grid-gap: 2.1rem;
   padding: 7px;
+  text-align: center;
 }
 
 .week {
   cursor: pointer;
+  font-size: 15px;
 }
 
 .selected {
   color: #5ca9dd;
+  font-weight: bold;
 }
 </style>
